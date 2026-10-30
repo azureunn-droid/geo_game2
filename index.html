@@ -365,7 +365,9 @@ const COUNTRY_POOL = {
     {name:'이란', lon:53, lat:32, term:'옛 페르시아 문명의 중심지였던 나라'},
     {name:'이라크', lon:44, lat:33, term:'티그리스강과 유프라테스강 사이 메소포타미아 문명의 나라'},
     {name:'싱가포르', lon:104, lat:1.35, term:'동남아시아의 작은 도시국가, 무역항으로 유명'},
-    {name:'이스라엘', lon:35, lat:31, term:'예루살렘이 있는 지중해 동쪽의 나라'}
+    {name:'이스라엘', lon:35, lat:31, term:'예루살렘이 있는 지중해 동쪽의 나라'},
+    {name:'네팔', lon:84, lat:28.4, term:'에베레스트산이 있는 히말라야의 나라'},
+    {name:'스리랑카', lon:80.7, lat:7.8, term:'인도 남쪽 인도양의 섬나라, 홍차로 유명'}
   ],
   europe: [
     {name:'영국', lon:-2, lat:54, term:'빅벤과 버킹엄궁전이 있는 섬나라'},
@@ -377,7 +379,9 @@ const COUNTRY_POOL = {
     {name:'그리스', lon:22, lat:39, term:'고대 신전, 파르테논 신전이 있는 나라'},
     {name:'폴란드', lon:19, lat:52, term:'쇼팽의 고향, 동유럽의 나라'},
     {name:'네덜란드', lon:5, lat:52, term:'풍차와 튤립으로 유명한 나라'},
-    {name:'노르웨이', lon:10, lat:61, term:'피오르 절경으로 유명한 북유럽 나라'}
+    {name:'노르웨이', lon:10, lat:61, term:'피오르 절경으로 유명한 북유럽 나라'},
+    {name:'아이슬란드', lon:-19, lat:65, term:'화산과 빙하, 온천이 많은 북대서양의 섬나라'},
+    {name:'스위스', lon:8, lat:46.8, term:'알프스산맥과 시계로 유명한 내륙국'}
   ],
   africa: [
     {name:'이집트', lon:30, lat:26, term:'피라미드와 나일강이 있는 나라'},
@@ -432,7 +436,7 @@ const KOR_TO_EN = {
   '말레이시아':'Malaysia','파키스탄':'Pakistan','방글라데시':'Bangladesh','카자흐스탄':'Kazakhstan',
   '이란':'Iran','이라크':'Iraq','싱가포르':'Singapore','이스라엘':'Israel',
   '영국':'United Kingdom','프랑스':'France','독일':'Germany','이탈리아':'Italy','스페인':'Spain',
-  '스웨덴':'Sweden','그리스':'Greece','폴란드':'Poland','네덜란드':'Netherlands','노르웨이':'Norway',
+  '스웨덴':'Sweden','그리스':'Greece','폴란드':'Poland','네덜란드':'Netherlands','노르웨이':'Norway','아이슬란드':'Iceland','스위스':'Switzerland','네팔':'Nepal','스리랑카':'Sri Lanka',
   '이집트':'Egypt','나이지리아':'Nigeria','남아프리카공화국':'South Africa','케냐':'Kenya','모로코':'Morocco',
   '에티오피아':'Ethiopia','알제리':'Algeria','가나':'Ghana','탄자니아':'Tanzania','마다가스카르':'Madagascar',
   '미국':'United States of America','캐나다':'Canada','멕시코':'Mexico','브라질':'Brazil','아르헨티나':'Argentina',
@@ -667,6 +671,7 @@ function buildWorldMap(){
     // 클릭이 어려워지지 않도록 범위를 넉넉히 잡고, 추가 확대는 아주 조금만 적용
     leafletMap.fitBounds([[-77,-178],[80,178]], {padding:[0,0], animate:false});
     leafletMap.setZoom(leafletMap.getZoom() + 0.12, {animate:false});
+    addSmallCountryHitAreas(quizNames);
   });
 }
 
@@ -674,7 +679,7 @@ function buildWorldMap(){
 // 자동 범위 계산이 커지는 문제를 피하고, 항상 대표적인 본토 영역이 화면을 꽉 채우도록 고정값 사용
 const CONTINENT_VIEW_BOUNDS = {
   asia:   [[-10, 35], [52, 147]],
-  europe: [[34, -11], [71, 32]],
+  europe: [[34, -26], [71, 32]],
   africa: [[-36, -19], [37, 52]],
   america:[[-56, -118], [60, -32]]
 };
@@ -719,6 +724,17 @@ function buildContinentMap(contId){
   settleMapView(()=>{
     leafletMap.fitBounds(CONTINENT_VIEW_BOUNDS[contId], {padding:[4,4], animate:false});
     leafletMap.setZoom(leafletMap.getZoom() + 0.3, {animate:false});
+    addSmallCountryHitAreas(quizNames);
+  });
+}
+
+// 아주 작은 나라(싱가포르)는 근처만 눌러도 정답 처리되도록 투명한 클릭 영역을 얹는다
+function addSmallCountryHitAreas(quizNames){
+  [{name:'싱가포르', lat:1.35, lon:103.82, r:13}].forEach(c=>{
+    if(!quizNames.has(c.name)) return;
+    const hit = L.circleMarker([c.lat, c.lon], {radius:c.r, stroke:false, fill:true, fillOpacity:0, fillColor:'#000', interactive:true});
+    hit.on('click', e=>{ L.DomEvent.stopPropagation(e); onRegionClick(c.name, e.originalEvent); });
+    hit.addTo(leafletMap);
   });
 }
 
