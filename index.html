@@ -142,6 +142,7 @@
   #stage{position:absolute;inset:0;overflow:hidden;}
   #mapDiv{position:absolute;inset:0;z-index:1;background:#8CCBEF;}
   .leaflet-container{background:#8CCBEF !important;outline:none;font-family:var(--font-body);}
+  .leaflet-interactive.inactive-region{cursor:default;}
   .leaflet-interactive{cursor:pointer;transition:filter .12s ease;outline:none;}
   .leaflet-interactive:focus{outline:none;}
   .leaflet-container path:focus,
@@ -641,19 +642,24 @@ function buildWorldMap(){
   L.geoJSON(COUNTRIES_GEOJSON, {
     style: feature=>{
       const cid = CONT_ID_MAP[feature.properties.CONTINENT];
-      if(!cid) return {color:'#8A9BBE', weight:0.3, fillColor:'#E4EAF5', fillOpacity:0.5};
+      if(!cid) return {color:'#8A9BBE', weight:0.3, fillColor:'#E4EAF5', fillOpacity:0.5, className:'inactive-region'};
       const kor = EN_TO_KOR[feature.properties.NAME];
       const isQuiz = kor && quizNames.has(kor);
       return isQuiz
         ? {color:'#3a2a05', weight:1, fillColor:'#FFD166', fillOpacity:0.92}
-        : {color:'#8A9BBE', weight:0.5, fillColor:'#E4EAF5', fillOpacity:0.92};
+        : {color:'#8A9BBE', weight:0.5, fillColor:'#E4EAF5', fillOpacity:0.92, className:'inactive-region'};
     },
     onEachFeature:(feature, layer)=>{
       const cid = CONT_ID_MAP[feature.properties.CONTINENT];
       if(!cid) return;
       const kor = EN_TO_KOR[feature.properties.NAME];
       const isQuiz = kor && quizNames.has(kor);
-      const regionId = isQuiz ? kor : '__none__';
+      // 색칠되지 않은(출제 대상이 아닌) 나라는 눌러도 아무 반응이 없도록 비활성화
+      if(!isQuiz){
+        layer.on('click', e=>{ L.DomEvent.stopPropagation(e); });
+        return;
+      }
+      const regionId = kor;
       layer.on('click', e=>{ L.DomEvent.stopPropagation(e); onRegionClick(regionId, e.originalEvent); });
       if(isQuiz){
         const style = {color:'#3a2a05', weight:1, fillColor:'#FFD166', fillOpacity:0.92};
@@ -701,12 +707,17 @@ function buildContinentMap(contId){
       const isQuiz = kor && quizNames.has(kor);
       return isQuiz
         ? {color:'#3a2a05', weight:1, fillColor:'#FFD166', fillOpacity:0.92}
-        : {color:'#8A9BBE', weight:0.5, fillColor:'#E4EAF5', fillOpacity:0.92};
+        : {color:'#8A9BBE', weight:0.5, fillColor:'#E4EAF5', fillOpacity:0.92, className:'inactive-region'};
     },
     onEachFeature:(feature, lyr)=>{
       const kor = EN_TO_KOR[feature.properties.NAME];
       const isQuiz = kor && quizNames.has(kor);
-      const regionId = isQuiz ? kor : '__none__';
+      // 색칠되지 않은(출제 대상이 아닌) 나라는 눌러도 아무 반응이 없도록 비활성화
+      if(!isQuiz){
+        lyr.on('click', e=>{ L.DomEvent.stopPropagation(e); });
+        return;
+      }
+      const regionId = kor;
       lyr.on('click', e=>{ L.DomEvent.stopPropagation(e); onRegionClick(regionId, e.originalEvent); });
       if(isQuiz){
         const style = {color:'#3a2a05', weight:1, fillColor:'#FFD166', fillOpacity:0.92};
